@@ -2,18 +2,6 @@
 
 
 [[projects]]
-  digest = "1:31d6e66ab882fae8534e01407a9cd6c036a51706a04adfe6912efaaf18989d20"
-  name = "github.com/klauspost/compress"
-  packages = [
-    "flate",
-    "gzip",
-    "zlib",
-  ]
-  pruneopts = "UT"
-  revision = "156c8d0eb96e404e0870865fc7b102b1cccde45a"
-  version = "v1.11.4"
-
-[[projects]]
   digest = "1:bf618941b014c2a86e4a6f39d4a26541c06fc63387fc50d4694d67eac2151f4a"
   name = "github.com/labstack/echo"
   packages = ["."]
@@ -57,36 +45,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:15ad8a80098fcc7a194b9db6b26d74072a852e4faa957848c8118193d3c69230"
-  name = "github.com/valyala/fasthttp"
-  packages = [
-    ".",
-    "fasthttputil",
-    "stackless",
-  ]
-  pruneopts = "UT"
-  revision = "e5f51c11919d4f66400334047b897ef0a94c6f3c"
-  version = "v20180529"
-
-[[projects]]
   digest = "1:d724474523928294ece8cc97e8d2371f27c7e6d3068bfa9ace93bd3105b4fdbd"
   name = "github.com/valyala/fasttemplate"
   packages = ["."]
   pruneopts = "UT"
   revision = "2275c48ed3e40f01fa347e220be31070a89b6ad4"
   version = "v1.2.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:bb044d0ddc61d901564cebe2ed329c5609e518fac0c6da59c9638cbaff08c428"
-  name = "github.com/wtnbyk-a19/youtube-manager-go"
-  packages = [
-    ".",
-    "routes",
-    "web/api",
-  ]
-  pruneopts = "UT"
-  revision = "99e7bcfe1b089ec3260b14b9f99997aa83f498a8"
 
 [[projects]]
   branch = "master"
@@ -146,12 +110,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/labstack/echo",
-    "github.com/valyala/fasthttp",
-    "github.com/wtnbyk-a19/youtube-manager-go",
-    "github.com/wtnbyk-a19/youtube-manager-go/routes",
-    "github.com/wtnbyk-a19/youtube-manager-go/web/api",
-  ]
+  input-imports = ["github.com/labstack/echo"]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -36,7 +36,3 @@
 [[constraint]]
   name = "github.com/valyala/fasthttp"
   version = "20180529.0.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/wtnbyk-a19/youtube-manager-go"
