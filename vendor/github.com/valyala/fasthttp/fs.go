@@ -16,9 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzip"
-	"github.com/valyala/bytebufferpool"
 )
 
 // ServeFileBytesUncompressed returns HTTP response containing file contents
@@ -85,15 +83,11 @@ func ServeFile(ctx *RequestCtx, path string) {
 	})
 	if len(path) == 0 || path[0] != '/' {
 		// extend relative path to absolute path
-		hasTrailingSlash := len(path) > 0 && path[len(path)-1] == '/'
 		var err error
 		if path, err = filepath.Abs(path); err != nil {
 			ctx.Logger().Printf("cannot resolve path %q to absolute file path: %s", path, err)
 			ctx.Error("Internal Server Error", StatusInternalServerError)
 			return
-		}
-		if hasTrailingSlash {
-			path += "/"
 		}
 	}
 	ctx.Request.SetRequestURI(path)
@@ -106,7 +100,6 @@ var (
 		Root:               "/",
 		GenerateIndexPages: true,
 		Compress:           true,
-		CompressBrotli:     true,
 		AcceptByteRange:    true,
 	}
 	rootFSHandler RequestHandler
@@ -146,12 +139,12 @@ func NewVHostPathRewriter(slashesCount int) PathRewriteFunc {
 		if len(host) == 0 {
 			host = strInvalidHost
 		}
-		b := bytebufferpool.Get()
+		b := AcquireByteBuffer()
 		b.B = append(b.B, '/')
 		b.B = append(b.B, host...)
 		b.B = append(b.B, path...)
 		ctx.URI().SetPathBytes(b.B)
-		bytebufferpool.Put(b)
+		ReleaseByteBuffer(b)
 
 		return ctx.Path()
 	}
@@ -200,7 +193,7 @@ func NewPathPrefixStripper(prefixSize int) PathRewriteFunc {
 //
 // It is prohibited copying FS values. Create new values instead.
 type FS struct {
-	noCopy noCopy //nolint:unused,structcheck
+	noCopy noCopy
 
 	// Path to the root directory to serve files from.
 	Root string
@@ -232,18 +225,11 @@ type FS struct {
 	// It adds CompressedFileSuffix suffix to the original file name and
 	// tries saving the resulting compressed file under the new file name.
 	// So it is advisable to give the server write access to Root
-	// and to all inner folders in order to minimize CPU usage when serving
+	// and to all inner folders in order to minimze CPU usage when serving
 	// compressed responses.
 	//
 	// Transparent compression is disabled by default.
 	Compress bool
-
-	// Uses brotli encoding and fallbacks to gzip in responses if set to true, uses gzip if set to false.
-	//
-	// This value has sense only if Compress is set.
-	//
-	// Brotli encoding is disabled by default.
-	CompressBrotli bool
 
 	// Enables byte range requests if set to true.
 	//
@@ -254,14 +240,6 @@ type FS struct {
 	//
 	// By default request path is not modified.
 	PathRewrite PathRewriteFunc
-
-	// PathNotFound fires when file is not found in filesystem
-	// this functions tries to replace "Cannot open requested path"
-	// server response giving to the programmer the control of server flow.
-	//
-	// By default PathNotFound returns
-	// "Cannot open requested path"
-	PathNotFound RequestHandler
 
 	// Expiration duration for inactive file handlers.
 	//
@@ -275,13 +253,6 @@ type FS struct {
 	// FSCompressedFileSuffix is used by default.
 	CompressedFileSuffix string
 
-	// Suffixes list to add to compressedFileSuffix depending on encoding
-	//
-	// This value has sense only if Compress is set.
-	//
-	// FSCompressedFileSuffixes is used by default.
-	CompressedFileSuffixes map[string]string
-
 	once sync.Once
 	h    RequestHandler
 }
@@ -290,14 +261,6 @@ type FS struct {
 // when trying to store compressed file under the new file name.
 // See FS.Compress for details.
 const FSCompressedFileSuffix = ".fasthttp.gz"
-
-// FSCompressedFileSuffixes is the suffixes FS adds to the original file names depending on encoding
-// when trying to store compressed file under the new file name.
-// See FS.Compress for details.
-var FSCompressedFileSuffixes = map[string]string{
-	"gzip": ".fasthttp.gz",
-	"br":   ".fasthttp.br",
-}
 
 // FSHandlerCacheDuration is the default expiration duration for inactive
 // file handlers opened by FS.
@@ -369,32 +332,22 @@ func (fs *FS) initRequestHandler() {
 	if cacheDuration <= 0 {
 		cacheDuration = FSHandlerCacheDuration
 	}
-
-	compressedFileSuffixes := fs.CompressedFileSuffixes
-	if len(compressedFileSuffixes["br"]) == 0 || len(compressedFileSuffixes["gzip"]) == 0 ||
-		compressedFileSuffixes["br"] == compressedFileSuffixes["gzip"] {
-		compressedFileSuffixes = FSCompressedFileSuffixes
-	}
-
-	if len(fs.CompressedFileSuffix) > 0 {
-		compressedFileSuffixes["gzip"] = fs.CompressedFileSuffix
-		compressedFileSuffixes["br"] = FSCompressedFileSuffixes["br"]
+	compressedFileSuffix := fs.CompressedFileSuffix
+	if len(compressedFileSuffix) == 0 {
+		compressedFileSuffix = FSCompressedFileSuffix
 	}
 
 	h := &fsHandler{
-		root:                   root,
-		indexNames:             fs.IndexNames,
-		pathRewrite:            fs.PathRewrite,
-		generateIndexPages:     fs.GenerateIndexPages,
-		compress:               fs.Compress,
-		compressBrotli:         fs.CompressBrotli,
-		pathNotFound:           fs.PathNotFound,
-		acceptByteRange:        fs.AcceptByteRange,
-		cacheDuration:          cacheDuration,
-		compressedFileSuffixes: compressedFileSuffixes,
-		cache:                  make(map[string]*fsFile),
-		cacheBrotli:            make(map[string]*fsFile),
-		cacheGzip:              make(map[string]*fsFile),
+		root:                 root,
+		indexNames:           fs.IndexNames,
+		pathRewrite:          fs.PathRewrite,
+		generateIndexPages:   fs.GenerateIndexPages,
+		compress:             fs.Compress,
+		acceptByteRange:      fs.AcceptByteRange,
+		cacheDuration:        cacheDuration,
+		compressedFileSuffix: compressedFileSuffix,
+		cache:                make(map[string]*fsFile),
+		compressedCache:      make(map[string]*fsFile),
 	}
 
 	go func() {
@@ -409,21 +362,18 @@ func (fs *FS) initRequestHandler() {
 }
 
 type fsHandler struct {
-	root                   string
-	indexNames             []string
-	pathRewrite            PathRewriteFunc
-	pathNotFound           RequestHandler
-	generateIndexPages     bool
-	compress               bool
-	compressBrotli         bool
-	acceptByteRange        bool
-	cacheDuration          time.Duration
-	compressedFileSuffixes map[string]string
+	root                 string
+	indexNames           []string
+	pathRewrite          PathRewriteFunc
+	generateIndexPages   bool
+	compress             bool
+	acceptByteRange      bool
+	cacheDuration        time.Duration
+	compressedFileSuffix string
 
-	cache       map[string]*fsFile
-	cacheBrotli map[string]*fsFile
-	cacheGzip   map[string]*fsFile
-	cacheLock   sync.Mutex
+	cache           map[string]*fsFile
+	compressedCache map[string]*fsFile
+	cacheLock       sync.Mutex
 
 	smallFileReaderPool sync.Pool
 }
@@ -687,8 +637,7 @@ func (h *fsHandler) cleanCache(pendingFiles []*fsFile) []*fsFile {
 	pendingFiles = remainingFiles
 
 	pendingFiles, filesToRelease = cleanCacheNolock(h.cache, pendingFiles, filesToRelease, h.cacheDuration)
-	pendingFiles, filesToRelease = cleanCacheNolock(h.cacheBrotli, pendingFiles, filesToRelease, h.cacheDuration)
-	pendingFiles, filesToRelease = cleanCacheNolock(h.cacheGzip, pendingFiles, filesToRelease, h.cacheDuration)
+	pendingFiles, filesToRelease = cleanCacheNolock(h.compressedCache, pendingFiles, filesToRelease, h.cacheDuration)
 
 	h.cacheLock.Unlock()
 
@@ -724,7 +673,6 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 	} else {
 		path = ctx.Path()
 	}
-	hasTrailingSlash := len(path) > 0 && path[len(path)-1] == '/'
 	path = stripTrailingSlashes(path)
 
 	if n := bytes.IndexByte(path, 0); n >= 0 {
@@ -745,18 +693,10 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 
 	mustCompress := false
 	fileCache := h.cache
-	fileEncoding := ""
 	byteRange := ctx.Request.Header.peek(strRange)
-	if len(byteRange) == 0 && h.compress {
-		if h.compressBrotli && ctx.Request.Header.HasAcceptEncodingBytes(strBr) {
-			mustCompress = true
-			fileCache = h.cacheBrotli
-			fileEncoding = "br"
-		} else if ctx.Request.Header.HasAcceptEncodingBytes(strGzip) {
-			mustCompress = true
-			fileCache = h.cacheGzip
-			fileEncoding = "gzip"
-		}
+	if len(byteRange) == 0 && h.compress && ctx.Request.Header.HasAcceptEncodingBytes(strGzip) {
+		mustCompress = true
+		fileCache = h.compressedCache
 	}
 
 	h.cacheLock.Lock()
@@ -770,19 +710,15 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 		pathStr := string(path)
 		filePath := h.root + pathStr
 		var err error
-		ff, err = h.openFSFile(filePath, mustCompress, fileEncoding)
+		ff, err = h.openFSFile(filePath, mustCompress)
 		if mustCompress && err == errNoCreatePermission {
 			ctx.Logger().Printf("insufficient permissions for saving compressed file for %q. Serving uncompressed file. "+
 				"Allow write access to the directory with this file in order to improve fasthttp performance", filePath)
 			mustCompress = false
-			ff, err = h.openFSFile(filePath, mustCompress, fileEncoding)
+			ff, err = h.openFSFile(filePath, mustCompress)
 		}
 		if err == errDirIndexRequired {
-			if !hasTrailingSlash {
-				ctx.RedirectBytes(append(path, '/'), StatusFound)
-				return
-			}
-			ff, err = h.openIndexFile(ctx, filePath, mustCompress, fileEncoding)
+			ff, err = h.openIndexFile(ctx, filePath, mustCompress)
 			if err != nil {
 				ctx.Logger().Printf("cannot open dir index %q: %s", filePath, err)
 				ctx.Error("Directory index is forbidden", StatusForbidden)
@@ -790,12 +726,7 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 			}
 		} else if err != nil {
 			ctx.Logger().Printf("cannot open file %q: %s", filePath, err)
-			if h.pathNotFound == nil {
-				ctx.Error("Cannot open requested path", StatusNotFound)
-			} else {
-				ctx.SetStatusCode(StatusNotFound)
-				h.pathNotFound(ctx)
-			}
+			ctx.Error("Cannot open requested path", StatusNotFound)
 			return
 		}
 
@@ -833,11 +764,7 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 
 	hdr := &ctx.Response.Header
 	if ff.compressed {
-		if fileEncoding == "br" {
-			hdr.SetCanonical(strContentEncoding, strBr)
-		} else if fileEncoding == "gzip" {
-			hdr.SetCanonical(strContentEncoding, strGzip)
-		}
+		hdr.SetCanonical(strContentEncoding, strGzip)
 	}
 
 	statusCode := StatusOK
@@ -881,10 +808,7 @@ func (h *fsHandler) handleRequest(ctx *RequestCtx) {
 			}
 		}
 	}
-	hdr.noDefaultContentType = true
-	if len(hdr.ContentType()) == 0 {
-		ctx.SetContentType(ff.contentType)
-	}
+	ctx.SetContentType(ff.contentType)
 	ctx.SetStatusCode(statusCode)
 }
 
@@ -948,10 +872,10 @@ func ParseByteRange(byteRange []byte, contentLength int) (startPos, endPos int, 
 	return startPos, endPos, nil
 }
 
-func (h *fsHandler) openIndexFile(ctx *RequestCtx, dirPath string, mustCompress bool, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) openIndexFile(ctx *RequestCtx, dirPath string, mustCompress bool) (*fsFile, error) {
 	for _, indexName := range h.indexNames {
 		indexFilePath := dirPath + "/" + indexName
-		ff, err := h.openFSFile(indexFilePath, mustCompress, fileEncoding)
+		ff, err := h.openFSFile(indexFilePath, mustCompress)
 		if err == nil {
 			return ff, nil
 		}
@@ -964,7 +888,7 @@ func (h *fsHandler) openIndexFile(ctx *RequestCtx, dirPath string, mustCompress 
 		return nil, fmt.Errorf("cannot access directory without index page. Directory %q", dirPath)
 	}
 
-	return h.createDirIndex(ctx.URI(), dirPath, mustCompress, fileEncoding)
+	return h.createDirIndex(ctx.URI(), dirPath, mustCompress)
 }
 
 var (
@@ -972,8 +896,8 @@ var (
 	errNoCreatePermission = errors.New("no 'create file' permissions")
 )
 
-func (h *fsHandler) createDirIndex(base *URI, dirPath string, mustCompress bool, fileEncoding string) (*fsFile, error) {
-	w := &bytebufferpool.ByteBuffer{}
+func (h *fsHandler) createDirIndex(base *URI, dirPath string, mustCompress bool) (*fsFile, error) {
+	w := &ByteBuffer{}
 
 	basePathEscaped := html.EscapeString(string(base.Path()))
 	fmt.Fprintf(w, "<html><head><title>%s</title><style>.dir { font-weight: bold }</style></head><body>", basePathEscaped)
@@ -1000,15 +924,12 @@ func (h *fsHandler) createDirIndex(base *URI, dirPath string, mustCompress bool,
 	}
 
 	fm := make(map[string]os.FileInfo, len(fileinfos))
-	filenames := make([]string, 0, len(fileinfos))
-nestedContinue:
+	var filenames []string
 	for _, fi := range fileinfos {
 		name := fi.Name()
-		for _, cfs := range h.compressedFileSuffixes {
-			if strings.HasSuffix(name, cfs) {
-				// Do not show compressed files on index page.
-				continue nestedContinue
-			}
+		if strings.HasSuffix(name, h.compressedFileSuffix) {
+			// Do not show compressed files on index page.
+			continue
 		}
 		fm[name] = fi
 		filenames = append(filenames, name)
@@ -1018,7 +939,7 @@ nestedContinue:
 	base.CopyTo(&u)
 	u.Update(string(u.Path()) + "/")
 
-	sort.Strings(filenames)
+	sort.Sort(sort.StringSlice(filenames))
 	for _, name := range filenames {
 		u.Update(name)
 		pathEscaped := html.EscapeString(string(u.Path()))
@@ -1036,12 +957,8 @@ nestedContinue:
 	fmt.Fprintf(w, "</ul></body></html>")
 
 	if mustCompress {
-		var zbuf bytebufferpool.ByteBuffer
-		if fileEncoding == "br" {
-			zbuf.B = AppendBrotliBytesLevel(zbuf.B, w.B, CompressDefaultCompression)
-		} else if fileEncoding == "gzip" {
-			zbuf.B = AppendGzipBytesLevel(zbuf.B, w.B, CompressDefaultCompression)
-		}
+		var zbuf ByteBuffer
+		zbuf.B = AppendGzipBytesLevel(zbuf.B, w.B, CompressDefaultCompression)
 		w = &zbuf
 	}
 
@@ -1066,7 +983,7 @@ const (
 	fsMaxCompressibleFileSize = 8 * 1024 * 1024
 )
 
-func (h *fsHandler) compressAndOpenFSFile(filePath string, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) compressAndOpenFSFile(filePath string) (*fsFile, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -1083,13 +1000,13 @@ func (h *fsHandler) compressAndOpenFSFile(filePath string, fileEncoding string) 
 		return nil, errDirIndexRequired
 	}
 
-	if strings.HasSuffix(filePath, h.compressedFileSuffixes[fileEncoding]) ||
+	if strings.HasSuffix(filePath, h.compressedFileSuffix) ||
 		fileInfo.Size() > fsMaxCompressibleFileSize ||
 		!isFileCompressible(f, fsMinCompressRatio) {
-		return h.newFSFile(f, fileInfo, false, "")
+		return h.newFSFile(f, fileInfo, false)
 	}
 
-	compressedFilePath := filePath + h.compressedFileSuffixes[fileEncoding]
+	compressedFilePath := filePath + h.compressedFileSuffix
 	absPath, err := filepath.Abs(compressedFilePath)
 	if err != nil {
 		f.Close()
@@ -1098,20 +1015,20 @@ func (h *fsHandler) compressAndOpenFSFile(filePath string, fileEncoding string) 
 
 	flock := getFileLock(absPath)
 	flock.Lock()
-	ff, err := h.compressFileNolock(f, fileInfo, filePath, compressedFilePath, fileEncoding)
+	ff, err := h.compressFileNolock(f, fileInfo, filePath, compressedFilePath)
 	flock.Unlock()
 
 	return ff, err
 }
 
-func (h *fsHandler) compressFileNolock(f *os.File, fileInfo os.FileInfo, filePath, compressedFilePath string, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) compressFileNolock(f *os.File, fileInfo os.FileInfo, filePath, compressedFilePath string) (*fsFile, error) {
 	// Attempt to open compressed file created by another concurrent
 	// goroutine.
 	// It is safe opening such a file, since the file creation
 	// is guarded by file mutex - see getFileLock call.
 	if _, err := os.Stat(compressedFilePath); err == nil {
 		f.Close()
-		return h.newCompressedFSFile(compressedFilePath, fileEncoding)
+		return h.newCompressedFSFile(compressedFilePath)
 	}
 
 	// Create temporary file, so concurrent goroutines don't use
@@ -1125,21 +1042,13 @@ func (h *fsHandler) compressFileNolock(f *os.File, fileInfo os.FileInfo, filePat
 		}
 		return nil, errNoCreatePermission
 	}
-	if fileEncoding == "br" {
-		zw := acquireStacklessBrotliWriter(zf, CompressDefaultCompression)
-		_, err = copyZeroAlloc(zw, f)
-		if err1 := zw.Flush(); err == nil {
-			err = err1
-		}
-		releaseStacklessBrotliWriter(zw, CompressDefaultCompression)
-	} else if fileEncoding == "gzip" {
-		zw := acquireStacklessGzipWriter(zf, CompressDefaultCompression)
-		_, err = copyZeroAlloc(zw, f)
-		if err1 := zw.Flush(); err == nil {
-			err = err1
-		}
-		releaseStacklessGzipWriter(zw, CompressDefaultCompression)
+
+	zw := acquireStacklessGzipWriter(zf, CompressDefaultCompression)
+	_, err = copyZeroAlloc(zw, f)
+	if err1 := zw.Flush(); err == nil {
+		err = err1
 	}
+	releaseStacklessGzipWriter(zw, CompressDefaultCompression)
 	zf.Close()
 	f.Close()
 	if err != nil {
@@ -1152,10 +1061,10 @@ func (h *fsHandler) compressFileNolock(f *os.File, fileInfo os.FileInfo, filePat
 	if err = os.Rename(tmpFilePath, compressedFilePath); err != nil {
 		return nil, fmt.Errorf("cannot move compressed file from %q to %q: %s", tmpFilePath, compressedFilePath, err)
 	}
-	return h.newCompressedFSFile(compressedFilePath, fileEncoding)
+	return h.newCompressedFSFile(compressedFilePath)
 }
 
-func (h *fsHandler) newCompressedFSFile(filePath string, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) newCompressedFSFile(filePath string) (*fsFile, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open compressed file %q: %s", filePath, err)
@@ -1165,19 +1074,19 @@ func (h *fsHandler) newCompressedFSFile(filePath string, fileEncoding string) (*
 		f.Close()
 		return nil, fmt.Errorf("cannot obtain info for compressed file %q: %s", filePath, err)
 	}
-	return h.newFSFile(f, fileInfo, true, fileEncoding)
+	return h.newFSFile(f, fileInfo, true)
 }
 
-func (h *fsHandler) openFSFile(filePath string, mustCompress bool, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) openFSFile(filePath string, mustCompress bool) (*fsFile, error) {
 	filePathOriginal := filePath
 	if mustCompress {
-		filePath += h.compressedFileSuffixes[fileEncoding]
+		filePath += h.compressedFileSuffix
 	}
 
 	f, err := os.Open(filePath)
 	if err != nil {
 		if mustCompress && os.IsNotExist(err) {
-			return h.compressAndOpenFSFile(filePathOriginal, fileEncoding)
+			return h.compressAndOpenFSFile(filePathOriginal)
 		}
 		return nil, err
 	}
@@ -1192,7 +1101,7 @@ func (h *fsHandler) openFSFile(filePath string, mustCompress bool, fileEncoding 
 		f.Close()
 		if mustCompress {
 			return nil, fmt.Errorf("directory with unexpected suffix found: %q. Suffix: %q",
-				filePath, h.compressedFileSuffixes[fileEncoding])
+				filePath, h.compressedFileSuffix)
 		}
 		return nil, errDirIndexRequired
 	}
@@ -1204,21 +1113,18 @@ func (h *fsHandler) openFSFile(filePath string, mustCompress bool, fileEncoding 
 			return nil, fmt.Errorf("cannot obtain info for original file %q: %s", filePathOriginal, err)
 		}
 
-		// Only re-create the compressed file if there was more than a second between the mod times.
-		// On MacOS the gzip seems to truncate the nanoseconds in the mod time causing the original file
-		// to look newer than the gzipped file.
-		if fileInfoOriginal.ModTime().Sub(fileInfo.ModTime()) >= time.Second {
+		if fileInfoOriginal.ModTime() != fileInfo.ModTime() {
 			// The compressed file became stale. Re-create it.
 			f.Close()
 			os.Remove(filePath)
-			return h.compressAndOpenFSFile(filePathOriginal, fileEncoding)
+			return h.compressAndOpenFSFile(filePathOriginal)
 		}
 	}
 
-	return h.newFSFile(f, fileInfo, mustCompress, fileEncoding)
+	return h.newFSFile(f, fileInfo, mustCompress)
 }
 
-func (h *fsHandler) newFSFile(f *os.File, fileInfo os.FileInfo, compressed bool, fileEncoding string) (*fsFile, error) {
+func (h *fsHandler) newFSFile(f *os.File, fileInfo os.FileInfo, compressed bool) (*fsFile, error) {
 	n := fileInfo.Size()
 	contentLength := int(n)
 	if n != int64(contentLength) {
@@ -1227,10 +1133,10 @@ func (h *fsHandler) newFSFile(f *os.File, fileInfo os.FileInfo, compressed bool,
 	}
 
 	// detect content-type
-	ext := fileExtension(fileInfo.Name(), compressed, h.compressedFileSuffixes[fileEncoding])
+	ext := fileExtension(fileInfo.Name(), compressed, h.compressedFileSuffix)
 	contentType := mime.TypeByExtension(ext)
 	if len(contentType) == 0 {
-		data, err := readFileHeader(f, compressed, fileEncoding)
+		data, err := readFileHeader(f, compressed)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read header of the file %q: %s", f.Name(), err)
 		}
@@ -1252,25 +1158,15 @@ func (h *fsHandler) newFSFile(f *os.File, fileInfo os.FileInfo, compressed bool,
 	return ff, nil
 }
 
-func readFileHeader(f *os.File, compressed bool, fileEncoding string) ([]byte, error) {
+func readFileHeader(f *os.File, compressed bool) ([]byte, error) {
 	r := io.Reader(f)
-	var (
-		br *brotli.Reader
-		zr *gzip.Reader
-	)
+	var zr *gzip.Reader
 	if compressed {
 		var err error
-		if fileEncoding == "br" {
-			if br, err = acquireBrotliReader(f); err != nil {
-				return nil, err
-			}
-			r = br
-		} else if fileEncoding == "gzip" {
-			if zr, err = acquireGzipReader(f); err != nil {
-				return nil, err
-			}
-			r = zr
+		if zr, err = acquireGzipReader(f); err != nil {
+			return nil, err
 		}
+		r = zr
 	}
 
 	lr := &io.LimitedReader{
@@ -1278,13 +1174,7 @@ func readFileHeader(f *os.File, compressed bool, fileEncoding string) ([]byte, e
 		N: 512,
 	}
 	data, err := ioutil.ReadAll(lr)
-	if _, err := f.Seek(0, 0); err != nil {
-		return nil, err
-	}
-
-	if br != nil {
-		releaseBrotliReader(br)
-	}
+	f.Seek(0, 0)
 
 	if zr != nil {
 		releaseGzipReader(zr)

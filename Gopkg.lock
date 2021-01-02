@@ -48,6 +48,14 @@
   version = "v2.0.5"
 
 [[projects]]
+  digest = "1:ecd9aa82687cf31d1585d4ac61d0ba180e42e8a6182b85bd785fcca8dfeefc1b"
+  name = "github.com/joho/godotenv"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23d116af351c84513e1946b527c88823e476be13"
+  version = "v1.3.0"
+
+[[projects]]
   digest = "1:31d6e66ab882fae8534e01407a9cd6c036a51706a04adfe6912efaaf18989d20"
   name = "github.com/klauspost/compress"
   packages = [
@@ -137,14 +145,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:41d70e555dd1f774c37ffa35f43063254dc1508621094d5e23303caa284ef013"
+  digest = "1:c21ffe0d1bfa8a2699debb1147788e5973d90021379c7f67bb4b1666c4548ac1"
   name = "github.com/wtnbyk-a19/youtube-manager-go"
   packages = [
     "routes",
     "web/api",
   ]
   pruneopts = "UT"
-  revision = "532b9a135d2c96dd4f73ac6201a74712d8fe0806"
+  revision = "f94e76ee76af3c1b505e68681f3ebd30b57bcfc3"
 
 [[projects]]
   digest = "1:5a8c7e0d5778c4b69fb9985bbe58b5417e05e1dcf8e670d240bbc9d439d6ec96"
@@ -393,6 +401,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/joho/godotenv",
     "github.com/labstack/echo",
     "github.com/labstack/echo/middleware",
     "github.com/sirupsen/logrus",
