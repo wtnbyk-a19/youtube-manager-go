@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/wtnbyk-a19/youtube-manager-go/web/api"
 	"github.com/labstack/echo"
+	"github.com/wtnbyk-a19/youtube-manager-go/web/api"
 )
 
 func Init(e *echo.Echo) {
 
-	g := echo.Group(#/api)
+	g := e.Group("/api")
 	{
 		g.GET("/popular", api.FetchMostPopularVideos())
 	}
