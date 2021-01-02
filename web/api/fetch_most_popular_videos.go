@@ -23,10 +23,7 @@ func FetchMostPopularVideos() echo.HandlerFunc {
 			logrus.Fatalf("Error creating new Youtube service: %v", err)
 		}
 
-		call := yts.Videos.
-			List("id,snippet").
-			Cart("mostPopular").
-			MaxResults(3)
+		call := yts.Videos.List("id,snippet").Chart("mostPopular").MaxResults(3)
 
 		res, err := call.Do()
 		if err != nil {
