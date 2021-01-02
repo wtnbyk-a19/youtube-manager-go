@@ -145,14 +145,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c21ffe0d1bfa8a2699debb1147788e5973d90021379c7f67bb4b1666c4548ac1"
+  digest = "1:336c5bea5b521f43d44348c6c09993c9607cd21fcd21e012aaad16e11edc41b8"
   name = "github.com/wtnbyk-a19/youtube-manager-go"
   packages = [
     "routes",
     "web/api",
   ]
   pruneopts = "UT"
-  revision = "f94e76ee76af3c1b505e68681f3ebd30b57bcfc3"
+  revision = "9239f5a56c860a25687cf99ef6d0f9408716ad59"
 
 [[projects]]
   digest = "1:5a8c7e0d5778c4b69fb9985bbe58b5417e05e1dcf8e670d240bbc9d439d6ec96"
