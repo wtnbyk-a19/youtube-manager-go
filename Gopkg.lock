@@ -152,7 +152,7 @@
     "web/api",
   ]
   pruneopts = "UT"
-  revision = "9239f5a56c860a25687cf99ef6d0f9408716ad59"
+  revision = "7197e5145e47c1a541ae21ccb94f12bc8aff3fc1"
 
 [[projects]]
   digest = "1:5a8c7e0d5778c4b69fb9985bbe58b5417e05e1dcf8e670d240bbc9d439d6ec96"
