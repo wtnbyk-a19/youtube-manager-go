@@ -10,13 +10,13 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-func YoutubeService() echo.MiddleWareFunc {
+func YoutubeService() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			key := os.Getenv("API_KEY")
 
 			ctx := context.Background()
-			service, err = youtube.NewService(ctx, option.WithAPIKey(key))
+			service, err := youtube.NewService(ctx, option.WithAPIKey(key))
 			if err != nil {
 				logrus.Fatal("Error creating YouTube service: %v", err)
 			}
