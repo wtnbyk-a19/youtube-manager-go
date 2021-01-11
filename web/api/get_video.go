@@ -12,7 +12,7 @@ type VideoResponse struct {
 }
 
 func GetVideo() echo.HandlerFunc {
-	return func(c echo.context) error {
+	return func(c echo.Context) error {
 		yts := c.Get("yts").(*youtube.Service)
 
 		videoId := c.Param("id")
