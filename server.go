@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/sirupsen/logrus"
+	"github.com/wtnbyk-a19/youtube-manager-go/middlewares"
 	"github.com/wtnbyk-a19/youtube-manager-go/routes"
 )
 
@@ -24,6 +25,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.CORS())
+	e.Use(middlewares.YouTubeService())
 
 	// Routes
 	routes.Init(e)
