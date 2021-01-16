@@ -13,7 +13,7 @@ func FetchMostPopularVideos() echo.HandlerFunc {
 
 		yts := c.Get("yts").(*youtube.Service)
 
-		part := []string{"id, snippet"}
+		part := []string{"id", "snippet"}
 		call := yts.Videos.List(part).Chart("mostPopular").MaxResults(3)
 
 		pageToken := c.QueryParam("pageToken")
