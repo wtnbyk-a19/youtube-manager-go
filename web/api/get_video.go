@@ -17,7 +17,7 @@ func GetVideo() echo.HandlerFunc {
 
 		videoId := c.Param("id")
 
-		part := []string{"id", "snippet"}
+		part := []string{"id, snippet"}
 		call := yts.Videos.List(part).Id(videoId)
 
 		res, err := call.Do()
