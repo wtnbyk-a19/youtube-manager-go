@@ -145,14 +145,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:336c5bea5b521f43d44348c6c09993c9607cd21fcd21e012aaad16e11edc41b8"
+  digest = "1:2067af618e750e463cfb33c01331f3a412270c80ec29e3de0cc097ed3ccb99dd"
   name = "github.com/wtnbyk-a19/youtube-manager-go"
   packages = [
+    "middlewares",
     "routes",
     "web/api",
   ]
   pruneopts = "UT"
-  revision = "7197e5145e47c1a541ae21ccb94f12bc8aff3fc1"
+  revision = "f585c0c19e1b4af84dd7fca9445611f9889c868a"
 
 [[projects]]
   digest = "1:5a8c7e0d5778c4b69fb9985bbe58b5417e05e1dcf8e670d240bbc9d439d6ec96"
@@ -406,6 +407,7 @@
     "github.com/labstack/echo/middleware",
     "github.com/sirupsen/logrus",
     "github.com/valyala/fasthttp",
+    "github.com/wtnbyk-a19/youtube-manager-go/middlewares",
     "github.com/wtnbyk-a19/youtube-manager-go/routes",
     "github.com/wtnbyk-a19/youtube-manager-go/web/api",
     "google.golang.org/api/option",
