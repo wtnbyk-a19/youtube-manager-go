@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-function Firebase() echo.middlewareFunc {
-	return func(next echo.HundlerFunc) echo.HandlerFunc {
+function Firebase() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			opt := option.WithCredentialsFile(os.Getenv("KEY_JSON_PATH"))
 			config := &firebase.Config(ProjectID:os.Getenv("Project_ID"))
