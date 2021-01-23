@@ -2,12 +2,41 @@
 
 
 [[projects]]
-  digest = "1:b1aa87c86a10632d143a5893a7776b6b884542124e6d45a1b6b46acdf975c3c9"
+  digest = "1:d486213d0c6db6ca690349a64131791fa3fb8ca49eb349e38e0d5deaaf511aad"
   name = "cloud.google.com/go"
-  packages = ["compute/metadata"]
+  packages = [
+    ".",
+    "compute/metadata",
+    "firestore",
+    "firestore/apiv1",
+    "iam",
+    "internal",
+    "internal/btree",
+    "internal/fields",
+    "internal/optional",
+    "internal/trace",
+    "internal/version",
+    "storage",
+  ]
   pruneopts = "UT"
   revision = "993bc6d69389a81fc259e0ce6f5d01cb37bd2899"
   version = "v0.74.0"
+
+[[projects]]
+  digest = "1:1748b997837cf190a6f34ec45519452bda820d249793ab436c55d763b55f65ef"
+  name = "firebase.google.com/go"
+  packages = [
+    ".",
+    "auth",
+    "db",
+    "iid",
+    "internal",
+    "messaging",
+    "storage",
+  ]
+  pruneopts = "UT"
+  revision = "54b81142d35e1b98cfd8687a9e56712c78a0f4ec"
+  version = "v3.13.0"
 
 [[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
@@ -26,18 +55,35 @@
   revision = "8c9f03a8e57eb486e42badaed3fb287da51807ba"
 
 [[projects]]
-  digest = "1:0407299779172c3b067809ffbeabf552ed9e4fe03066a80b540979933cc79616"
+  digest = "1:9528acdf5af07759d9ca51bfe3a56a61f8481ed72d601c95fde842c2748970bb"
   name = "github.com/golang/protobuf"
   packages = [
+    "internal/gengogrpc",
     "proto",
+    "protoc-gen-go",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
     "ptypes/timestamp",
+    "ptypes/wrappers",
   ]
   pruneopts = "UT"
   revision = "4846b58453b3708320bdb524f25cc5a1d9cda4d4"
   version = "v1.4.3"
+
+[[projects]]
+  digest = "1:bbd3bb07622d854f47197191e94f9fb789efb3c3fba7baf9609c25a78625611b"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "ec71d6d790538ad88c95a192fd059e11afb45b6f"
+  version = "v0.5.4"
 
 [[projects]]
   digest = "1:766102087520f9d54f2acc72bd6637045900ac735b4a419b128d216f0c5c4876"
@@ -54,6 +100,18 @@
   pruneopts = "UT"
   revision = "23d116af351c84513e1946b527c88823e476be13"
   version = "v1.3.0"
+
+[[projects]]
+  digest = "1:076c531484852c227471112d49465873aaad47e5ad6e1aec3a5b092a436117ef"
+  name = "github.com/jstemmer/go-junit-report"
+  packages = [
+    ".",
+    "formatter",
+    "parser",
+  ]
+  pruneopts = "UT"
+  revision = "cc1f095d5cc5eca2844f5c5ea7bb37f6b9bf6cac"
+  version = "v0.9.1"
 
 [[projects]]
   digest = "1:31d6e66ab882fae8534e01407a9cd6c036a51706a04adfe6912efaaf18989d20"
@@ -156,7 +214,7 @@
   revision = "f585c0c19e1b4af84dd7fca9445611f9889c868a"
 
 [[projects]]
-  digest = "1:5a8c7e0d5778c4b69fb9985bbe58b5417e05e1dcf8e670d240bbc9d439d6ec96"
+  digest = "1:9a3ba76159d29e6aa7ec8c8ec59beff1b02e569daa5d57896b8f9fc883ee0c69"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -164,6 +222,7 @@
     "internal/tagencoding",
     "metric/metricdata",
     "metric/metricproducer",
+    "plugin/ocgrpc",
     "plugin/ochttp",
     "plugin/ochttp/propagation/b3",
     "resource",
@@ -190,6 +249,28 @@
   ]
   pruneopts = "UT"
   revision = "eec23a3978adcfd26c29f4153eaa3e3d9b2cc53a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b973032ea7c1700c050fdbcb7c45331b08b85d7bd70acef0c99a77ee52627141"
+  name = "golang.org/x/lint"
+  packages = [
+    ".",
+    "golint",
+  ]
+  pruneopts = "UT"
+  revision = "83fdc39ff7b56453e3793356bcff3070b9b96445"
+
+[[projects]]
+  digest = "1:4c6e4e4e7d0f334dd6201c3172d9795c5c87e19b2612a83ec309c899c4aa0903"
+  name = "golang.org/x/mod"
+  packages = [
+    "module",
+    "semver",
+  ]
+  pruneopts = "UT"
+  revision = "6ce8bb3f08e0e47592fe93e007071d86dcf214bb"
+  version = "v0.4.1"
 
 [[projects]]
   branch = "master"
@@ -260,7 +341,40 @@
   version = "v0.3.4"
 
 [[projects]]
-  digest = "1:b1ada0ca725ebea5eb0fe9353e7298f8ff227d0c46dab531957efbd6ed382dbb"
+  branch = "dev.go2go"
+  digest = "1:16520b9c79ff0d5e17a2007de0d9df5a1c16b04e7322943b52c3fe3d7f980346"
+  name = "golang.org/x/tools"
+  packages = [
+    "cmd/goimports",
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/gcimporter",
+    "go/types/typeutil",
+    "internal/event",
+    "internal/event/core",
+    "internal/event/keys",
+    "internal/event/label",
+    "internal/fastwalk",
+    "internal/gocommand",
+    "internal/gopathwalk",
+    "internal/imports",
+  ]
+  pruneopts = "UT"
+  revision = "76e917206452e73dc28cbeb58a15ea8f30487263"
+
+[[projects]]
+  branch = "master"
+  digest = "1:918a46e4a2fb83df33f668f5a6bd51b2996775d073fce1800d3ec01b0a5ddd2b"
+  name = "golang.org/x/xerrors"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = "UT"
+  revision = "5ec99f83aff198f5fbd629d6c8d8eb38a04218ca"
+
+[[projects]]
+  digest = "1:4808f24477419327ac75e1e5a1027e2ee958f1a0a23f39f2a3b236a0764240c2"
   name = "google.golang.org/api"
   packages = [
     "googleapi",
@@ -269,9 +383,13 @@
     "internal/gensupport",
     "internal/impersonate",
     "internal/third_party/uritemplates",
+    "iterator",
     "option",
     "option/internaloption",
+    "storage/v1",
+    "transport",
     "transport/cert",
+    "transport/grpc",
     "transport/http",
     "transport/http/internal/propagation",
     "transport/internal/dca",
@@ -282,7 +400,7 @@
   version = "v0.36.0"
 
 [[projects]]
-  digest = "1:14c413c64fab6d835c4e31671369f68ac7f38d2087c968eb2e55d8105b6b420d"
+  digest = "1:9a3c550c85a5a62ccc4cadd8525497b99554094a1adecc560c97bebc231ca81b"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -293,7 +411,9 @@
     "internal/log",
     "internal/modules",
     "internal/remote_api",
+    "internal/socket",
     "internal/urlfetch",
+    "socket",
     "urlfetch",
   ]
   pruneopts = "UT"
@@ -302,14 +422,22 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7339759b4869e4b12e0ab4848f0f5edaa3c045b9b1cfe1d22af121605322490c"
+  digest = "1:1b5389f08e1ea645c1d84ddeb36d7df3709037aa35e74e0c075e7586458ee87d"
   name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
+  packages = [
+    "googleapis/api/annotations",
+    "googleapis/firestore/v1",
+    "googleapis/iam/v1",
+    "googleapis/rpc/code",
+    "googleapis/rpc/status",
+    "googleapis/type/expr",
+    "googleapis/type/latlng",
+  ]
   pruneopts = "UT"
   revision = "8c77b98c765d0c8f0e0cec54ef5dd2316cf2d21c"
 
 [[projects]]
-  digest = "1:3f2a827dee58351f7f44ef630b7759b5869934cd99b97f64645536a982e9ff4c"
+  digest = "1:2b4ced76dc51b32ae115ef6c1735d9585577bd6dc80617dfc0a31c9a004501b3"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -317,12 +445,23 @@
     "backoff",
     "balancer",
     "balancer/base",
+    "balancer/grpclb",
+    "balancer/grpclb/grpc_lb_v1",
     "balancer/grpclb/state",
     "balancer/roundrobin",
     "binarylog/grpc_binarylog_v1",
     "codes",
     "connectivity",
     "credentials",
+    "credentials/alts",
+    "credentials/alts/internal",
+    "credentials/alts/internal/authinfo",
+    "credentials/alts/internal/conn",
+    "credentials/alts/internal/handshaker",
+    "credentials/alts/internal/handshaker/service",
+    "credentials/alts/internal/proto/grpc_gcp",
+    "credentials/google",
+    "credentials/oauth",
     "encoding",
     "encoding/proto",
     "grpclog",
@@ -361,15 +500,19 @@
   version = "v1.34.0"
 
 [[projects]]
-  digest = "1:fd328c5b52e433ea3ffc891bcc4f94469a82bf478558208db2b386aad8a304a1"
+  digest = "1:d6eb738b0817c74e0184cafb71486bc984d4409dd9ffcecd74aea95d81fa02d6"
   name = "google.golang.org/protobuf"
   packages = [
+    "cmd/protoc-gen-go/internal_gengo",
+    "compiler/protogen",
+    "encoding/protojson",
     "encoding/prototext",
     "encoding/protowire",
     "internal/descfmt",
     "internal/descopts",
     "internal/detrand",
     "internal/encoding/defval",
+    "internal/encoding/json",
     "internal/encoding/messageset",
     "internal/encoding/tag",
     "internal/encoding/text",
@@ -386,13 +529,19 @@
     "internal/strs",
     "internal/version",
     "proto",
+    "reflect/protodesc",
     "reflect/protoreflect",
     "reflect/protoregistry",
     "runtime/protoiface",
     "runtime/protoimpl",
+    "types/descriptorpb",
     "types/known/anypb",
     "types/known/durationpb",
+    "types/known/emptypb",
+    "types/known/structpb",
     "types/known/timestamppb",
+    "types/known/wrapperspb",
+    "types/pluginpb",
   ]
   pruneopts = "UT"
   revision = "3f7a61f89bb6813f89d981d1870ed68da0b3c3f1"
@@ -402,6 +551,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "firebase.google.com/go",
+    "firebase.google.com/go/auth",
     "github.com/joho/godotenv",
     "github.com/labstack/echo",
     "github.com/labstack/echo/middleware",
