@@ -10,7 +10,7 @@ import (
 
 type ToggleFavoriteVideoResponse struct {
 	VideoId    string `json:"video_id"`
-	IsFavorite bool   `jason:"is_favorite"`
+	IsFavorite bool   `json:"is_favorite"`
 }
 
 func ToggleFavoriteVideo() echo.HandlerFunc {
