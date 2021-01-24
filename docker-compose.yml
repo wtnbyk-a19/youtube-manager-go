@@ -10,7 +10,7 @@ services:
       - MYSQL_DATABASE=youtube
       - MYSQL_ROOT_PASSWORD=pass
       - MYSQL_USER=default
-      - MYSQL_PASSWORD-password
+      - MYSQL_PASSWORD=password
       - TZ=Asia/Tokyo
     ports:
       - "4306:3306"

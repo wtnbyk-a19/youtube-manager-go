@@ -2,12 +2,12 @@ package models
 
 import "time"
 
-type Favorite struct {
-	ID         uint      `gorm:"primary_key"`
-	UserID     string    `json:"user_id"`
-	VideoID    string    `json:"video_id"`
-	CreatedAt  time.Time `json:"-"`
-	UpadatedAt time.Time `json:"-"`
+type User struct {
+	ID         uint       `gorm:"primary_key"`
+	UID        string     `json:"-"`
+	CreatedAt  time.Time  `json:"-"`
+	UpadatedAt time.Time  `json:"-"`
+	DeletedAt  *time.Time `sql:"index"json:"-"`
 
-	User User
+	Favorites []Favorite
 }
