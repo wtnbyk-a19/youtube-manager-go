@@ -19,7 +19,7 @@ func FetchFavoriteVideos() echo.HandlerFunc {
 		dbs.DB.Table("users").Where(models.User{UID: token.UID}).First(&user)
 
 		favorites := []models.Favorite{}
-		dbs.DB.Model(&user).Related(favorites)
+		dbs.DB.Model(&user).Related(&favorites)
 
 		videoIds := ""
 		for _, f := range favorites {
